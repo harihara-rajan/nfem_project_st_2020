@@ -46,7 +46,7 @@ def fext_element(p):
     f_ext_ele[0,0] = -1 * p * a
     return f_ext_ele
 
-def fint_elements_K_elements(i,U):
+def fint_elements_K_elements   (i,U):
     B = B_mat(rnodes, rnodes[i], rnodes[i+1])
     J = jacob(rnodes, rnodes[i], rnodes[i+1])
     N = N_mat()
