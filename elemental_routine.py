@@ -1,32 +1,19 @@
 import numpy as np 
 from mesh_refinement import *
 from material_routine import *
+from inparams import *
 
 def N_mat():
     chi = 0
     N=[(1/2) * (1 - chi), (1/2) * (1 + chi)]
     return N 
 
-
 def jacob(rnodes, r1, r2):
     return (r2 - r1) / (2)
-
 
 def B_mat(rnodes, r1, r2):
     B = [[-1 / (r2 - r1), +1 / (r2 - r1)],[+1 / (r1 + r2),+1 / (r1 + r2)]]
     return B
-
-
-# def ele_stiff():
-#     """Function for calculating element stiffness matrix"""
-#     B = B_mat(rnodes, rnodes[i], rnodes[i+1])
-#     J = jacob(rnodes, rnodes[i], rnodes[i+1])
-#     N = N_mat()
-#     r = [rnodes[i], rnodes[i+1]]
-#     k1 = np.transpose(B).dot(C.dot (B))
-#     k2 = J * np.dot(np.transpose(N),np.transpose(r))
-#     ke = 2*k1*k2
-#     return ke
 
 def assignment():
     """Function for calculating Assignment Matrix"""
@@ -40,29 +27,32 @@ def assignment():
         A.append(a)
     return A
 
-
 def fext_element(p):
     f_ext_ele = np.zeros((num_ele+1,1))
     f_ext_ele[0,0] = -1 * p * a
     return f_ext_ele
 
-def fint_elements_K_elements   (i,U):
+def fint_elements_K_elements(i,u,dt,Q,du_e,prestress): #,du_e,prestress,dt
     B = B_mat(rnodes, rnodes[i], rnodes[i+1])
     J = jacob(rnodes, rnodes[i], rnodes[i+1])
     N = N_mat()
     r = [rnodes[i], rnodes[i+1]]
-    strain = (np.dot(B,U))
-    stress = np.dot(C,strain)
+    strain = (np.dot(B,u)) # elemental strain
+    deltastrain = (np.dot(B,du_e))
+    stress = np.dot(elastic_stiffness(),strain) + over_stress(dt,Q,deltastrain,prestress)
+    """B.transpose*Stress*N.transpose*r.transpose*weight(2)*J - for calculating elemental internal force(following three lines)"""
     s1 = np.dot(np.transpose(B), stress)
     s2 = J * np.dot(np.transpose(N),np.transpose(r))
     fint_element = 2*s1*s2
-    ###########
-    k1 = np.transpose(B).dot(C.dot (B))
+    """ B.transpose*C*B*J*N.transpose*r.transpose - for calculating the element stiffness matrix (following three lines)"""
+    k1 = np.transpose(B).dot(material_stiffness(Q,dt).dot (B))
     k2 = J * np.dot(np.transpose(N),np.transpose(r)) 
     k_element =2*k1*k2 
-    return fint_element,k_element 
+    return fint_element, k_element,over_stress(dt,Q,deltastrain,prestress)
 
-    
-
+def over_stress(dt,Q,deltastrain,prestress):
+    constant =  (1/(1+(dt/T)))*Q
+    oversress = np.dot(np.array([2/3,-1/3,-1/3,2/31]).reshape(2,2),deltastrain)
+    return (constant*oversress) + prestress
 
 
