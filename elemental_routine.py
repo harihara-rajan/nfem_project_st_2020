@@ -39,20 +39,19 @@ def fint_elements_K_elements(i,u,dt,Q,du_e,prestress): #,du_e,prestress,dt
     r = [rnodes[i], rnodes[i+1]]
     strain = (np.dot(B,u)) # elemental strain
     deltastrain = (np.dot(B,du_e))
-    stress = np.dot(elastic_stiffness(),strain) + over_stress(dt,Q,deltastrain,prestress)
+    stress,over_stress,Ct=material_routine(strain,deltastrain,dt,Q,T,prestress)
+    #stress = np.dot(elastic_stiffness(),strain) + over_stress(dt,Q,deltastrain,prestress)
+    # print(stress)
     """B.transpose*Stress*N.transpose*r.transpose*weight(2)*J - for calculating elemental internal force(following three lines)"""
     s1 = np.dot(np.transpose(B), stress)
     s2 = J * np.dot(np.transpose(N),np.transpose(r))
     fint_element = 2*s1*s2
     """ B.transpose*C*B*J*N.transpose*r.transpose - for calculating the element stiffness matrix (following three lines)"""
-    k1 = np.transpose(B).dot(material_stiffness(Q,dt).dot (B))
+    k1 = np.transpose(B).dot(Ct.dot (B))
     k2 = J * np.dot(np.transpose(N),np.transpose(r)) 
     k_element =2*k1*k2 
-    return fint_element, k_element,over_stress(dt,Q,deltastrain,prestress)
+    return fint_element, k_element,over_stress
 
-def over_stress(dt,Q,deltastrain,prestress):
-    constant =  (1/(1+(dt/T)))*Q
-    oversress = np.dot(np.array([2/3,-1/3,-1/3,2/31]).reshape(2,2),deltastrain)
-    return (constant*oversress) + prestress
+
 
 

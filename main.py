@@ -4,30 +4,30 @@ from elemental_routine import *
 from analytical import *
 from inparams import *
 
-# Q = int(input("Enter the Value of Q: "))
-time = np.arange(0,30.1,0.2)
+Q =int(input("Enter the Value of Q: "))
+time = np.arange(0,30.1,0.1)
 U = np.zeros((num_ele+1,1), dtype=float)
+disp_B = []
 du = np.zeros((num_ele+1,1), dtype=float)
 fext_global = np.zeros((num_ele+1,1), dtype=float)
 A = assignment()
 over_stress = np.zeros((2,num_ele))
 strain = np.zeros((2,num_ele))
-
+load = []
 for i in time:
-    dt = time[1]- time[0]
     count = 0
+    dt = time[1]- time[0]
     if i <= tl:
         fext_global[0]= (pmax * a * (i))/tl # Load scaling
-        # print('here the vaue of q is zero')
-        Q = 0
+        load.append((pmax * a * (i))/tl)
     else:
        fext_global[0] = pmax * a
-    #    print('here the value of q is 100000')
-       Q = 100000
+       load.append(pmax * a)
     """
     Newton Raphson Scheme 
     """
-    while True:
+    while True: 
+        count+=1
         fint_global = np.zeros((num_ele+1,1), dtype=float)
         K_global =np.zeros((num_ele+1,num_ele+1), dtype=float)
         R = np.zeros((num_ele+1,1),dtype=float)
@@ -43,14 +43,16 @@ for i in time:
            over_stress[1,i] = OStress[1]
            fint_global += np.dot(np.transpose(A[i]),f_int_element)
            K_global += A[i].transpose().dot(k_elem.dot(A[i]))
-        R = fext_global - fint_global   
-        du = np.linalg.solve(K_global,R)
-        if np.linalg.norm(R,np.inf) <= 0.005*np.linalg.norm(fint_global,np.inf) or np.linalg.norm(du,np.inf) <= 0.005 * np.linalg.norm(U,np.inf):
-            break
+        R = fext_global - fint_global  
+        du = np.dot(np.linalg.inv(K_global), R)
         U = U + du
-        count += 1
-
+        if np.linalg.norm(R,np.inf) <= 0.005*np.linalg.norm(fint_global,np.inf) or np.linalg.norm(du,np.inf) <= 0.005 * np.linalg.norm(U,np.inf):
+            break        
+    disp_B.append(U[-1])    
 analytical_displacement = analytical()
+#print(len(disp_B))
+#print(len(time))
+plt.plot(time, disp_B)
 plt.plot(rnodes, analytical_displacement, c = 'k' ,label = 'Analytical Solution')
 plt.scatter(rnodes,U, c='m', marker = 'o', label = 'Numerical Solution')
 plt.legend()
