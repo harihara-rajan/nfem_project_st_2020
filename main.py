@@ -4,6 +4,7 @@ from elemental_routine import *
 from analytical import *
 from inparams import *
 from mesh_refinement import *
+import time 
 """
 Main program 
 ------------------------------
@@ -26,7 +27,7 @@ if inputs == 0:
     Q = 0 
 else:
     Q = 100000
-
+start_time = time.time()
 time = np.arange(0,30.1,0.1) # time sequence
 U = np.zeros((num_ele+1,1), dtype=float) # global nodal displacement
 disp_b = [] # array to store displacement at outer radius b, from time = 0 seconds to 30 seconds
@@ -75,6 +76,10 @@ for i in time:
             break        
     disp_b.append(U[-1]) # displacements at b: plotting purpose 
     disp_a.append(U[0])  # displacements at a: plotting purpose
+end_time = time.time()
+total_time = end_time - start_time
+print(total_time) 
+
 
 """
 Extracting Radial and Tangential stress from the Stress vector(voigt Notation)
